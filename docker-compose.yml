@@ -1,0 +1,45 @@
+version: '3.9'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: competition_mysql
+    environment:
+      MYSQL_DATABASE: competition_db
+      MYSQL_USER: competition_user
+      MYSQL_PASSWORD: change_me
+      MYSQL_ROOT_PASSWORD: root_change_me
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./deploy/mysql_data:/var/lib/mysql
+      - ./sql:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password
+
+  backend:
+    image: python:3.11-slim
+    container_name: competition_backend
+    working_dir: /app/backend
+    volumes:
+      - ./backend:/app/backend
+      - ./.env.example:/app/.env.example
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    env_file:
+      - .env.example
+    command: bash -lc "pip install -r requirements.txt && python run.py"
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mysql
+
+  frontend:
+    image: node:20-alpine
+    container_name: competition_frontend
+    working_dir: /app/frontend
+    volumes:
+      - ./frontend:/app/frontend
+    command: sh -lc "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    ports:
+      - "80:5173"
+    depends_on:
+      - backend
