@@ -59,7 +59,7 @@
     </el-form>
     <!--  底部  -->
     <div class="el-login-footer">
-      <span>{{ footerContent }}</span>
+      <!-- <span>{{ footerContent }}</span> -->
     </div>
   </div>
 </template>

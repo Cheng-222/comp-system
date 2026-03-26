@@ -507,9 +507,11 @@ def build_statistics_payload(contest_id=None, allowed_contest_ids=None, user=Non
     for item in results:
         student = student_map.get(item.student_id)
         contest = contest_map.get(item.contest_id)
-        level_key = item.award_level or "未获奖"
+        # 判断是否获奖：优先检查 result_status，其次检查 award_level
+        is_awarded = item.result_status == "awarded" or bool(item.award_level)
+        level_key = item.award_level or ("已获奖" if is_awarded else "未获奖")
         award_levels[level_key] = award_levels.get(level_key, 0) + 1
-        if item.award_level:
+        if is_awarded:
             awarded_count += 1
         else:
             unawarded_list.append(
@@ -534,7 +536,7 @@ def build_statistics_payload(contest_id=None, allowed_contest_ids=None, user=Non
             },
         )
         contest_entry["resultCount"] += 1
-        if item.award_level:
+        if is_awarded:
             contest_entry["awardedCount"] += 1
         if item.certificate_attachment_name:
             contest_entry["certificateCount"] += 1
@@ -549,7 +551,7 @@ def build_statistics_payload(contest_id=None, allowed_contest_ids=None, user=Non
             },
         )
         college_entry["participantCount"] += 1
-        if item.award_level:
+        if is_awarded:
             college_entry["awardedCount"] += 1
 
     return {
