@@ -44,8 +44,10 @@ import os
 def resolve_runtime_path(value, fallback):
     # 在Vercel环境中使用临时目录
     if os.getenv('VERCEL') == '1':
-        if fallback in ['uploads', 'backups']:
-            return Path(tempfile.gettempdir()) / fallback
+        # 提取路径的最后一部分进行检查
+        fallback_name = Path(fallback).name
+        if fallback_name in ['uploads', 'backups']:
+            return Path(tempfile.gettempdir()) / fallback_name
     
     raw = str(value or fallback).strip() or fallback
     path = Path(raw)
