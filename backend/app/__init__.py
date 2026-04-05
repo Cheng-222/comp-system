@@ -94,7 +94,7 @@ def create_app():
     Path(app.config["LOG_DIR"]).mkdir(parents=True, exist_ok=True)
 
     db.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"] or "*"}, r"/captchalmage": {"origins": app.config["CORS_ORIGINS"] or "*"}}, supports_credentials=False)
+    cors.init_app(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"] or "*"}, r"/captchaImage": {"origins": app.config["CORS_ORIGINS"] or "*"}}, supports_credentials=False)
 
     for blueprint in BLUEPRINTS:
         app.register_blueprint(blueprint)
