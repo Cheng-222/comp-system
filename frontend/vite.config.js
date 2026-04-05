@@ -40,6 +40,11 @@ export default defineConfig(({ mode, command }) => {
           changeOrigin: true,
           rewrite: (p) => p.replace(/^\/dev-api/, '')
         },
+        '/prod-api': {
+          target: baseUrl,
+          changeOrigin: true,
+          rewrite: (p) => p.replace(/^\/prod-api/, '')
+        },
         '^/v3/api-docs/(.*)': {
           target: baseUrl,
           changeOrigin: true,
