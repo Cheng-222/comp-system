@@ -1,2 +1,13 @@
 [tool.vercel.scripts]
-app = "backend.run:app"
+app = "run:app"
+
+[project]
+name = "competition-backend"
+version = "0.1.0"
+dependencies =
+    "Flask==3.1.0"
+    "Flask-Cors==5.0.0"
+    "Flask-SQLAlchemy==3.1.1"
+    "PyMySQL==1.1.1"
+    "python-dotenv==1.0.1"
+    "openpyxl==3.1.5"
