@@ -26,7 +26,14 @@ def build_database_uri():
     return f"mysql+pymysql://{username}:{password}@{host}:{port}/{database}?charset=utf8mb4"
 
 
+import tempfile
+
 def resolve_path(value, fallback):
+    # 在Vercel环境中使用临时目录
+    if os.getenv('VERCEL') == '1':
+        if fallback in ['uploads', 'logs']:
+            return os.path.join(tempfile.gettempdir(), fallback)
+    
     raw = value or fallback
     path = Path(raw)
     if not path.is_absolute():
