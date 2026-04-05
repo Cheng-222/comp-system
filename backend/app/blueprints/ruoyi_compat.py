@@ -180,7 +180,7 @@ def login():
     username = (payload.get('username') or '').strip()
     password = payload.get('password') or ''
     user = SysUser.query.filter_by(username=username).first()
-    if not user or user.status != 1 or not verify_password(password, user.password_hash):
+    if not user or user.status != 1 or not user.password_hash or not verify_password(password, user.password_hash):
         record_login_event(username or 'unknown', 1, '用户名或密码错误', request.remote_addr, request.user_agent.string)
         return jsonify({'code': 500, 'msg': '用户名或密码错误'})
     record_login_event(user.username, 0, '登录成功', request.remote_addr, request.user_agent.string)
