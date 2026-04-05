@@ -32,6 +32,8 @@ def password_hash(password):
 
 
 def verify_password(password, password_digest):
+    if not password_digest:
+        return False
     return check_password_hash(password_digest, password)
 
 
