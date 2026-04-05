@@ -81,6 +81,7 @@ def _serialize_oper_event(row):
 
 def record_login_event(user_name, status, msg, ipaddr="127.0.0.1", user_agent=""):
     try:
+        # 只添加到会话，不立即提交，减少数据库操作时间
         db.session.add(
             AuditLoginInfo(
                 user_name=user_name or "unknown",
@@ -92,7 +93,8 @@ def record_login_event(user_name, status, msg, ipaddr="127.0.0.1", user_agent=""
                 msg=msg or "",
             )
         )
-        db.session.commit()
+        # 不在这里提交，让调用方决定何时提交
+        # db.session.commit()
     except Exception:
         db.session.rollback()
 
