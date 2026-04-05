@@ -38,7 +38,15 @@ def _get_runtime_config_value(config_key, fallback=""):
     return value if value else fallback
 
 
+import tempfile
+import os
+
 def resolve_runtime_path(value, fallback):
+    # 在Vercel环境中使用临时目录
+    if os.getenv('VERCEL') == '1':
+        if fallback in ['uploads', 'backups']:
+            return Path(tempfile.gettempdir()) / fallback
+    
     raw = str(value or fallback).strip() or fallback
     path = Path(raw)
     if not path.is_absolute():
