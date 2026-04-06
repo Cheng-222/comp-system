@@ -28,7 +28,7 @@ def resolve_user_from_token(token):
 
 
 def password_hash(password):
-    return generate_password_hash(password, method='pbkdf2:sha256')
+    return generate_password_hash(password)
 
 
 def verify_password(password, password_digest):
