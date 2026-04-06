@@ -95,6 +95,8 @@ def create_app():
 
     db.init_app(app)
     cors.init_app(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"] or "*"}, r"/captchaImage": {"origins": app.config["CORS_ORIGINS"] or "*"}, r"/login": {"origins": app.config["CORS_ORIGINS"] or "*"}, r"/logout": {"origins": app.config["CORS_ORIGINS"] or "*"}, r"/getInfo": {"origins": app.config["CORS_ORIGINS"] or "*"}, r"/getRouters": {"origins": app.config["CORS_ORIGINS"] or "*"}}, supports_credentials=False)
+    from .extensions import cache
+    cache.init_app(app)
 
     for blueprint in BLUEPRINTS:
         app.register_blueprint(blueprint)

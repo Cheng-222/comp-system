@@ -45,7 +45,13 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "change_this_secret")
     SQLALCHEMY_DATABASE_URI = build_database_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_size": 10,
+        "max_overflow": 20,
+        "pool_timeout": 30,
+        "pool_recycle": 1800
+    }
     JSON_AS_ASCII = False
     TOKEN_EXPIRES_SECONDS = int(os.getenv("TOKEN_EXPIRES_SECONDS", "86400"))
     CORS_ORIGINS = [item.strip() for item in os.getenv("CORS_ORIGINS", "*").split(",") if item.strip()]
@@ -58,3 +64,7 @@ class Config:
     BAIDU_PAN_SIGN_KEY = os.getenv("BAIDU_PAN_SIGN_KEY", "")
     BAIDU_PAN_CALLBACK_URL = os.getenv("BAIDU_PAN_CALLBACK_URL", "http://localhost:5002/api/integrations/baidu-pan/callback")
     APP_AUTO_SEED = os.getenv("APP_AUTO_SEED", "true").lower() == "true"
+    # 缓存配置
+    CACHE_TYPE = os.getenv("CACHE_TYPE", "simple")
+    CACHE_DEFAULT_TIMEOUT = int(os.getenv("CACHE_DEFAULT_TIMEOUT", "300"))
+    CACHE_THRESHOLD = int(os.getenv("CACHE_THRESHOLD", "1000"))

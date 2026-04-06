@@ -3,6 +3,7 @@ from flask import Blueprint, g, request
 from ..audit_store import record_login_event
 from ..common import success
 from ..errors import APIError
+from ..extensions import cache
 from ..models import SysUser
 from ..security import auth_required, create_token, verify_password
 
@@ -36,6 +37,7 @@ def me():
 
 @bp.get("/menus")
 @auth_required()
+@cache.cached(timeout=300, key_prefix=lambda: f"menus_{g.current_user.id}")
 def menus():
     role_codes = set(g.current_user.role_codes)
     items = [
