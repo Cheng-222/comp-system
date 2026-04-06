@@ -1,0 +1,305 @@
+-- 创建扩展（如果不存在）
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 用户表
+CREATE TABLE IF NOT EXISTS sys_user (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  username VARCHAR(64) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  real_name VARCHAR(64) NOT NULL,
+  mobile VARCHAR(32),
+  student_id BIGINT NULL,
+  status SMALLINT NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 角色表
+CREATE TABLE IF NOT EXISTS sys_role (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  role_code VARCHAR(64) NOT NULL UNIQUE,
+  role_name VARCHAR(64) NOT NULL,
+  status SMALLINT NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 用户角色关联表
+CREATE TABLE IF NOT EXISTS sys_user_role (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  user_id BIGINT NOT NULL,
+  role_id BIGINT NOT NULL,
+  CONSTRAINT fk_sys_user_role_user FOREIGN KEY (user_id) REFERENCES sys_user(id),
+  CONSTRAINT fk_sys_user_role_role FOREIGN KEY (role_id) REFERENCES sys_role(id)
+);
+
+-- 学生信息表
+CREATE TABLE IF NOT EXISTS student_info (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  student_no VARCHAR(32) NOT NULL UNIQUE,
+  name VARCHAR(64) NOT NULL,
+  gender VARCHAR(16),
+  college VARCHAR(128) NOT NULL,
+  major VARCHAR(128) NOT NULL,
+  class_name VARCHAR(128) NOT NULL,
+  grade VARCHAR(32) NULL,
+  advisor_name VARCHAR(64) NULL,
+  mobile VARCHAR(32),
+  email VARCHAR(128),
+  history_experience TEXT NULL,
+  remark VARCHAR(500) NULL,
+  status SMALLINT NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 竞赛信息表
+CREATE TABLE IF NOT EXISTS contest_info (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  contest_name VARCHAR(255) NOT NULL,
+  contest_level VARCHAR(64) NOT NULL,
+  organizer VARCHAR(255) NOT NULL,
+  subject_category VARCHAR(64) NULL,
+  undertaker VARCHAR(255) NULL,
+  target_students VARCHAR(255) NULL,
+  contact_name VARCHAR(64) NULL,
+  contact_mobile VARCHAR(32) NULL,
+  location VARCHAR(255) NULL,
+  description TEXT NULL,
+  contest_year INT NULL,
+  sign_up_start TIMESTAMP NULL,
+  sign_up_end TIMESTAMP NULL,
+  contest_date TIMESTAMP NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'draft',
+  material_requirements TEXT NULL,
+  quota_limit INT NOT NULL DEFAULT 0,
+  rule_attachment_name VARCHAR(255) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 竞赛报名表
+CREATE TABLE IF NOT EXISTS contest_registration (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  contest_id BIGINT NOT NULL,
+  student_id BIGINT NOT NULL,
+  direction VARCHAR(128),
+  team_name VARCHAR(128),
+  project_name VARCHAR(255) NULL,
+  instructor_name VARCHAR(64) NULL,
+  instructor_mobile VARCHAR(32) NULL,
+  emergency_contact VARCHAR(64) NULL,
+  emergency_mobile VARCHAR(32) NULL,
+  source_type VARCHAR(32) NULL,
+  remark VARCHAR(500) NULL,
+  registration_status VARCHAR(32) NOT NULL DEFAULT 'submitted',
+  review_status VARCHAR(32) NOT NULL DEFAULT 'pending',
+  final_status VARCHAR(32) NOT NULL DEFAULT 'submitted',
+  submit_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (contest_id, student_id),
+  CONSTRAINT fk_registration_contest FOREIGN KEY (contest_id) REFERENCES contest_info(id),
+  CONSTRAINT fk_registration_student FOREIGN KEY (student_id) REFERENCES student_info(id)
+);
+
+-- 报名材料表
+CREATE TABLE IF NOT EXISTS registration_material (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  registration_id BIGINT NOT NULL,
+  material_type VARCHAR(64) NOT NULL,
+  file_name VARCHAR(255) NOT NULL,
+  submit_status VARCHAR(32) NOT NULL DEFAULT 'submitted',
+  review_status VARCHAR(32) NOT NULL DEFAULT 'pending',
+  reviewer_id BIGINT NULL,
+  review_comment VARCHAR(500) NULL,
+  reviewed_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_material_registration FOREIGN KEY (registration_id) REFERENCES contest_registration(id),
+  CONSTRAINT fk_material_reviewer FOREIGN KEY (reviewer_id) REFERENCES sys_user(id)
+);
+
+-- 报名流程日志表
+CREATE TABLE IF NOT EXISTS registration_flow_log (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  registration_id BIGINT NOT NULL,
+  action_type VARCHAR(64) NOT NULL,
+  before_status VARCHAR(32),
+  after_status VARCHAR(32),
+  reason VARCHAR(500),
+  operator_id BIGINT NOT NULL,
+  operated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_flow_registration FOREIGN KEY (registration_id) REFERENCES contest_registration(id),
+  CONSTRAINT fk_flow_operator FOREIGN KEY (operator_id) REFERENCES sys_user(id)
+);
+
+-- 通知消息表
+CREATE TABLE IF NOT EXISTS notice_message (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  title VARCHAR(255) NOT NULL,
+  message_type VARCHAR(32) NOT NULL DEFAULT 'notice',
+  target_scope VARCHAR(64) NOT NULL DEFAULT 'all',
+  contest_id BIGINT NULL,
+  target_role VARCHAR(64) NULL,
+  target_status VARCHAR(32) NULL,
+  priority VARCHAR(16) NULL,
+  summary VARCHAR(255) NULL,
+  planned_send_at TIMESTAMP NULL,
+  content TEXT NOT NULL,
+  send_status VARCHAR(32) NOT NULL DEFAULT 'pending',
+  created_by BIGINT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_notice_created_by FOREIGN KEY (created_by) REFERENCES sys_user(id)
+);
+
+-- 消息阅读记录表
+CREATE TABLE IF NOT EXISTS message_read_record (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  message_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  read_status SMALLINT NOT NULL DEFAULT 0,
+  read_at TIMESTAMP NULL,
+  UNIQUE (message_id, user_id),
+  CONSTRAINT fk_read_message FOREIGN KEY (message_id) REFERENCES notice_message(id),
+  CONSTRAINT fk_read_user FOREIGN KEY (user_id) REFERENCES sys_user(id)
+);
+
+-- 竞赛结果表
+CREATE TABLE IF NOT EXISTS contest_result (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  contest_id BIGINT NOT NULL,
+  student_id BIGINT NOT NULL,
+  award_level VARCHAR(64),
+  result_status VARCHAR(32) NOT NULL DEFAULT 'pending',
+  score FLOAT NULL,
+  ranking INT NULL,
+  certificate_no VARCHAR(64) NULL,
+  certificate_attachment_name VARCHAR(255),
+  archive_remark VARCHAR(500) NULL,
+  confirmed_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_result_contest FOREIGN KEY (contest_id) REFERENCES contest_info(id),
+  CONSTRAINT fk_result_student FOREIGN KEY (student_id) REFERENCES student_info(id)
+);
+
+-- 附件信息表
+CREATE TABLE IF NOT EXISTS attachment_info (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  file_name VARCHAR(255) NOT NULL,
+  file_path VARCHAR(500) NOT NULL,
+  file_ext VARCHAR(32),
+  file_size BIGINT NOT NULL DEFAULT 0,
+  biz_type VARCHAR(64) NOT NULL,
+  uploader_id BIGINT NOT NULL,
+  uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_attachment_uploader FOREIGN KEY (uploader_id) REFERENCES sys_user(id)
+);
+
+-- 导入任务表
+CREATE TABLE IF NOT EXISTS import_task (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  task_type VARCHAR(64) NOT NULL,
+  source_file_id BIGINT NULL,
+  success_count INT NOT NULL DEFAULT 0,
+  fail_count INT NOT NULL DEFAULT 0,
+  status VARCHAR(32) NOT NULL DEFAULT 'pending',
+  created_by BIGINT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_import_created_by FOREIGN KEY (created_by) REFERENCES sys_user(id)
+);
+
+-- 导出任务表
+CREATE TABLE IF NOT EXISTS export_task (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  task_type VARCHAR(64) NOT NULL,
+  file_id BIGINT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'pending',
+  created_by BIGINT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_export_created_by FOREIGN KEY (created_by) REFERENCES sys_user(id)
+);
+
+-- 创建更新时间触发器函数
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 为所有表添加更新时间触发器
+CREATE TRIGGER update_sys_user_updated_at
+  BEFORE UPDATE ON sys_user
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_sys_role_updated_at
+  BEFORE UPDATE ON sys_role
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_student_info_updated_at
+  BEFORE UPDATE ON student_info
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_contest_info_updated_at
+  BEFORE UPDATE ON contest_info
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_contest_registration_updated_at
+  BEFORE UPDATE ON contest_registration
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_registration_material_updated_at
+  BEFORE UPDATE ON registration_material
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_contest_result_updated_at
+  BEFORE UPDATE ON contest_result
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_attachment_info_updated_at
+  BEFORE UPDATE ON attachment_info
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_import_task_updated_at
+  BEFORE UPDATE ON import_task
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_export_task_updated_at
+  BEFORE UPDATE ON export_task
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- 插入初始数据
+-- 插入角色数据
+INSERT INTO sys_role (role_code, role_name, status) VALUES
+('admin', '管理员', 1),
+('teacher', '教师', 1),
+('student', '学生', 1)
+ON CONFLICT (role_code) DO NOTHING;
+
+-- 插入管理员用户（密码：Admin123!）
+INSERT INTO sys_user (username, password_hash, real_name, status) VALUES
+('admin', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', '管理员', 1)
+ON CONFLICT (username) DO NOTHING;
+
+-- 关联管理员角色
+INSERT INTO sys_user_role (user_id, role_id) 
+SELECT u.id, r.id FROM sys_user u, sys_role r 
+WHERE u.username = 'admin' AND r.role_code = 'admin'
+ON CONFLICT DO NOTHING;
